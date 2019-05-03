@@ -1,0 +1,28 @@
+---
+title: "dplyr"
+author: "Chang.W.H"
+date: "2019年5月3日"
+output: html_document
+---
+```{r,include=FALSE}
+library(rio)
+library(tidyverse)
+library(ggplot2)
+```
+as.Date() 函式將文字型式的日歷 (calendar date) 轉換成 R 的 “日期類別物件”
+
+substring()第一個參數是輸入的字串，第二與第三個參數則是子字串的開始與結束位置：
+```{r}
+data=import("user.txt")
+result=data%>%
+  mutate(Month=as.Date(data$CREATETIME,"%m/%d/%Y %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  group_by(Month)%>%
+  summarise(MemberCount=n())
+head(result)
+```
+```{r}
+ggplot(result,aes(x=Month,y=MemberCount))+
+  geom_bar(stat="identity",fill="skyblue")
+```
+
