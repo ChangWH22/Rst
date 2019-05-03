@@ -1,0 +1,35 @@
+---
+title: "dplyr"
+author: "Chang.W.H"
+date: "2019年5月4日"
+output: html_document
+---
+```{r,include=FALSE}
+library(rio)
+library(tidyverse)
+library(ggplot2)
+```
+dplyr-distinct()可以去除重覆並找出唯一值
+
+a %in% b
+a值是否在b中，真輸出TURE，否者輸出FALSE
+```{r}
+user=import("user.txt")
+buylist=import("buylist.txt")
+buylist=buylist%>%
+  distinct(BUYERID)
+
+result=user%>%
+  mutate(Month=as.Date(user$CREATETIME,"%m/%d/%Y %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  mutate(Hasbought= ID %in% buylist$BUYERID)%>%
+  group_by(Month,Hasbought)%>%
+  summarise(MemberCount=n())
+
+  head(result)
+```
+```{r}
+ggplot(result,aes(x=Month,y=MemberCount,fill=Hasbought))+
+  geom_bar(stat="identity")
+```
+
