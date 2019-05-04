@@ -1,0 +1,55 @@
+---
+title: "dplyr"
+author: "Chang.W.H"
+date: "2019年5月4日"
+output: html_document
+---
+
+```{r,include=FALSE}
+library(rio)
+library(tidyverse)
+library(ggplot2)
+```
+spread<->gather
+
+spread(,fill)欄位沒有值塞0
+```{r}
+data=import("buylist.txt")
+user=import("user.txt")
+top3=data%>%
+  mutate(Month=as.Date(CREATETIME,"%Y-%m-%d %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  group_by(Month)%>%
+  summarise(income=sum(PRICE))%>%
+  arrange(desc(income))
+head(top3)
+```
+```{r}
+top3_payments=data%>%
+  mutate(Month=as.Date(CREATETIME,"%Y-%m-%d %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  filter(Month==c("2017-05","2017-08","2017-11"),PAYMENTTYPE=="信用卡")%>%
+  separate(NAME,c("category","kind"),sep = "\\(")%>%
+  group_by(category)%>%
+  summarise(category_income=sum(PRICE))%>%
+  arrange(desc((category_income)))
+head(top3_payments)
+```
+#當老闆想知道：五月購買生活家電且消費滿450以上的消費者聯絡資訊給我
+
+merge(another_data,by.x=orig,by.y=new)
+合併兩個資料由X的特徵、Y的特徵取共同
+```{r}
+customer=data%>%
+   mutate(Month=as.Date(CREATETIME,"%Y-%m-%d %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  separate(NAME,c("category","kind"),sep = "\\(")%>%
+  filter(Month=="2017-05",category=="生活家電",PRICE>=450)%>%
+  select(-c("ID"))%>%
+  merge(user, by.x="BUYERID", by.y="ID")%>%
+  select(c(4:6,9,11))
+head(customer)
+```
+
+
+
