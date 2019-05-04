@@ -1,0 +1,55 @@
+---
+title: "Untitled"
+author: "Chang.W.H"
+date: "2019年5月4日"
+output: html_document
+---
+```{r,include=FALSE}
+library(rio)
+library(tidyverse)
+library(ggplot2)
+```
+spread<->gather
+
+spread(,fill)欄位沒有值塞0
+```{r}
+data=import("buylist.txt")
+data1=data%>%
+  mutate(Month=as.Date(CREATETIME,"%Y-%m-%d %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  separate(NAME,c("category","kind"),sep = "\\(")%>%
+  group_by(Month,category)%>%
+  summarise(Income=sum(PRICE))%>%
+  spread(category,Income,fill = 0)
+  
+head(data1)
+
+```
+#銷售最好的商品
+```{r}
+category_sum=colSums(data1[,-1])
+highest_category_index=which(category_sum==max(category_sum))
+colnames(data1[,-1][highest_category_index])
+```
+gather()
+第一個放組合後的欄位名稱，第二個放”組合值”的欄位名稱
+第三個參數是哪些欄位要被組
+
+arrange() dataframe排序 desc(遞減)
+```{r}
+data_gather=data1%>%
+  gather(Category,Income,2:73,na.rm = F)%>%
+  group_by(Category)%>%
+  summarise(category_income=sum(Income))%>%
+  arrange(desc(category_income))
+print(data_gather)
+```
+
+ggplot 效果不好
+```{r}
+ggplot(data_gather,aes(x=Category,y=category_income))+
+  geom_bar(stat = "identity")+
+  coord_flip()
+```
+
+
