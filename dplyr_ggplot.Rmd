@@ -1,0 +1,52 @@
+---
+title: "dplyr"
+author: "Chang.W.H"
+date: "2019年5月4日"
+output: html_document
+---
+```{r,include=FALSE}
+library(rio)
+library(tidyverse)
+library(ggplot2)
+```
+dplyr-distinct()可以去除重覆並找出唯一值
+
+a %in% b
+a值是否在b中，真輸出TURE，否者輸出FALSE
+```{r}
+user=import("user.txt")
+list=import("buylist.txt")
+buyer_list=list%>%
+  distinct(BUYERID)
+
+result=user%>%
+  mutate(Month=as.Date(user$CREATETIME,"%m/%d/%Y %H:%M:%S"))%>%
+  mutate(Month=substring(Month,1,7))%>%
+  mutate(Hasbought= ID %in% buyer_list$BUYERID)%>%
+  group_by(Month,Hasbought)%>%
+  summarise(MemberCount=n())
+
+  head(result)
+```
+#會員卡有無的消費狀態
+```{r}
+ggplot(result,aes(x=Month,y=MemberCount,fill=Hasbought))+
+  geom_bar(stat="identity")
+```
+```{r}
+month_income=list%>%mutate(Month=as.Date(list$CREATETIME,"%Y-%m-%d %H:%M:%S"))%>%
+  mutate(Month=substring(Month,3,7))%>%
+  group_by(Month)%>%
+  summarise(Income=sum(PRICE))
+```
+#營收狀態
+
+geom_bar "fill填滿"，"color外框"
+
+geom_text "vjust調整標籤位置(-1,1)"
+```{r}
+ggplot(month_income,aes(x=Month,y=Income))+
+  geom_bar(stat = "identity",fill="gold1")+
+  geom_text(aes(label=Income),vjust=0,color="red")
+```
+
