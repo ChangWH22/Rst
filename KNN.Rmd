@@ -1,0 +1,57 @@
+---
+title: "KNN"
+author: "Chang.W.H"
+date: "2019年4月24日"
+output: html_document
+---
+```{r,include=FALSE}
+library(tidyverse)
+library(class)
+```
+```{r}
+ggplot(iris,aes(x=Sepal.Length,y=Sepal.Width))+
+  geom_point(aes(color=Species))
+ggplot(iris,aes(x=Petal.Length,y=Petal.Width))+
+  geom_point(aes(color=(Species)))
+```
+```{r}
+set.seed(111)
+n=nrow(iris)
+idx=sample(n,size = round(0.7*n))
+train=iris[idx,]
+test=iris[-idx,]
+```
+參數1準備訓練樣本組答案
+```{r}
+train_label=train$Species
+#去除樣本組的答案
+knn_train=train[,-c(5)]
+knn_test=test[,-c(5)]
+#計算K值
+kv=round(sqrt(n))
+#建立模型
+prediction=knn(train = knn_train,test = knn_test,cl=train_label,k=kv)
+#評估正確性
+cm=table(x=test$Species,y=prediction,dnn = c("real","pred"))
+cm
+knnaccuracy=sum(diag(cm))/sum(cm)
+knnaccuracy
+```
+#選擇k value
+```{r}
+klist=seq(1:(kv+kv))
+knnfunction=
+  function(x,knntrain,knntest,trainlabel,testlabel){
+    prediction=knn(train = knntrain,test = knntest,cl=trainlabel,k=x)
+    cm=table(x=testlabel,y=prediction)
+    accuracy=sum(diag(cm))/sum(cm)
+  }
+accuracys=sapply(klist, knnfunction,knntrain=knn_train,knntest=knn_test,trainlabel=
+                   train_label,testlabel=test$Species)
+# k value與準確度視覺化
+df=data.frame(kv=klist,accuracy=accuracys)
+ggplot(df,aes(x=kv,y=accuracy,label=kv,color=accuracy))+
+  geom_point(size=5)+geom_text(vjust=2)
+```
+
+
