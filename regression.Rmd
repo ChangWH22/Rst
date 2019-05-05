@@ -1,0 +1,50 @@
+---
+title: "regression"
+author: "Chang.W.H"
+date: "2019年4月22日"
+output: html_document
+---
+載入內建資料{cars}
+
+先畫散布圖觀察
+```{r,include=FALSE}
+library(tidyverse)
+```
+```{r}
+ggplot(cars,aes(x=speed,y=dist))+
+  geom_point(shape=10,size=2)
+```
+```{r}
+carsLM <- lm(dist ~ speed, data = cars)
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point(shape = 10, size = 5) + 
+  geom_smooth(method = lm) + labs(x = "速度", y = "煞車距離")
+```
+
+```{r}
+summary(carsLM)
+```
+```{r}
+new = data.frame(speed=20)
+result = predict(carsLM,newdata = new)
+```
+把預測值座標用點geom_point放在圖上，用紅色的註記顯示。
+```{r}
+ggplot(cars, aes(x = speed, y = dist)) + 
+  geom_point(shape = 10, size = 5) + 
+  geom_point(x = new$speed, y = result, size = 5, shape =  17, color = "red") + 
+  geom_smooth(method = lm) + labs(x = "速度", y = "煞車距離") 
+```
+
+直接新增欄位!!
+```{r}
+cars2 = cars
+#一英哩 = 1.6公里
+cars2$speed = cars$speed * 1.6094
+#一英尺 = 0.3048公尺
+cars2$distByMetric = cars$dist * 0.3048
+```
+
+
+
+
