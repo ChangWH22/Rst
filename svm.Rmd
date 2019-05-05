@@ -1,0 +1,27 @@
+---
+title: "svm"
+author: "Chang.W.H"
+date: "2019年4月24日"
+output: html_document
+---
+```{r}
+library(ISLR)
+library(e1071)
+```
+```{r}
+set.seed(1113)
+n=nrow(iris)
+idx=sample(seq_len(n),size=round(0.7*n))
+train=iris[idx,]
+test=iris[-idx,]
+```
+
+```{r}
+model=svm(Species~.,data=train)
+result=predict(model,test)
+cm=table(x=test$Species,y=result)
+cm
+svmaccuracy=sum(diag(cm))/sum(cm)
+svmaccuracy
+```
+
