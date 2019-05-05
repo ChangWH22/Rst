@@ -1,0 +1,95 @@
+---
+title: "logistic_regression"
+author: "Chang.W.H"
+date: "2019年4月22日"
+output: html_document
+---
+```{r,include=FALSE}
+library(AER)
+data(CreditCard)
+```
+
+glm(formula=,family=機率分配,data=)
+```{r}
+head(CreditCard)
+#假設我們只要以下欄位(card:是否核准卡片、信用貶弱報告數、年齡、收入(美金)、自有住宅狀況、往來時間)
+bankcard=subset(CreditCard, select = c(card, reports, age, income, owner,months))
+bankcard$card = ifelse(bankcard$card=="yes",1,0)
+card_glm=glm(formula = card ~ .,family = "binomial",data = bankcard)
+summary(card_glm)
+```
+#單筆資料預測
+我們想試著預測兩個信用卡申請件的核准與否:
+
+- 30歲無信用不良紀錄，收入10萬美金，有自有住宅，往來50個月
+- 30歲有信用不良紀錄，收入5萬美金，無自有住宅，往來50個月
+```{r}
+new1 = data.frame(reports = 0, age=30, income=10,owner="yes",months=50)
+result=predict(card_glm,newdata = new1,type="response")
+result
+new2 = data.frame(reports = 1, age=30, income=5,owner="no",months=50)
+result=predict(card_glm,newdata = new2,type="response")
+result
+```
+#測試模型
+將資料分為訓練與測試組
+```{r}
+n=nrow(bankcard)
+set.seed(111)
+#將數據順序重新排列
+newbankcard=bankcard[sample(n),]
+#取出樣本數的idx
+t_idx=sample(seq_len(n),size = round(0.7*n)) #sample-隨機抽樣;seq_len生成round-去掉小數且進位
+#效果等同sample(0.7*n)
+traindata=newbankcard[t_idx,]
+testdata=newbankcard[-t_idx,]
+```
+#重新建模並使用混淆矩陣(confusion matrix)觀察模型的表現
+```{r}
+card_glm_train=glm(formula = card~.,family = "binomial",data = traindata)
+result_test=predict(card_glm_train,newdata = testdata,type="response")
+result_approve=ifelse(result_test>0.6,1,0)
+confuse_matrix=table(testdata$card,result_approve,dnn = c("實際","預測"))
+confuse_matrix
+#對角線下的就是正確的預測數值
+```
+#預測準度
+```{r}
+#計算核準卡正確率
+confuse_matrix[4]/sum(confuse_matrix[,2])
+#計算拒補件正確率
+confuse_matrix[1]/sum(confuse_matrix[,1])
+#整體準確率(對角線元素總和/所有觀察值總和)
+accuracy=sum(diag(confuse_matrix))/sum(confuse_matrix)
+accuracy
+```
+#ROC曲線(receiver operating characteristic curve)
+
+- TPR = TP/(TP+FN) 實際核准的申請中，被模型說中核准的命中率 (hit rate)。
+- FPR = FP/(FP+TN) 實際拒捕件的申請中，被模型預測錯誤的比例，也稱假警報率 (false alarm rate)。
+
+回到ROC曲線，曲線主要是由兩個變參數(1-specificity)及Sensitivity繪製。
+
+- 1-specificity=FPR，沒有假警報的機率。
+- Sensitivity=TPR(True positiverate),被模型說中核准的命中率。
+```{r,include=FALSE}
+library(ROCR)
+```
+```{r}
+pred=prediction(result_test,testdata$card)
+perf=performance(pred,measure = "tpr",x.measure = "fpr")
+#計算AUC
+auc=performance(pred,"auc")
+#畫圖
+plot(perf, col = rainbow(7), main = "ROC curve", xlab = "Specificity(FPR)", ylab = "Sensitivity(TPR)")
+#AUC = 0.5
+abline(0, 1)
+#實際AUC值
+text(0.5, 0.5, as.character(auc@y.values[[1]]))
+
+```
+ROC曲線下方的面積稱為AUC(Area under the Curve of ROC)
+中間的直線就是AUC=0.5，模型的AUC值越高，正確率越高，由於這次模型的假警報率不低，實際計算出來的AUC=0.74只能算是普普通通的表現。
+
+
+
